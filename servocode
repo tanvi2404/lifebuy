@@ -1,0 +1,77 @@
+import cv2
+import serial
+import time
+import RPi.GPIO as GPIO
+from time import sleep
+GPIO.setmode(GPIO.BOARD)
+
+GPIO.setup(03, GPIO.OUT)
+
+pwm=GPIO.PWM(03, 50)
+
+pwm.start(0)
+
+
+def SetAngle(angle):
+	duty = angle / 18 + 2
+	GPIO.output(03, True)
+	pwm.ChangeDutyCycle(duty)
+	sleep(1)
+	GPIO.output(03, False)
+	pwm.ChangeDutyCycle(0)
+
+
+
+# Load Haar cascade for face detection
+face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+
+# Function to send commands to the robot
+
+# Initialize video capture
+cap = cv2.VideoCapture(0)  # Use your camera index if not default
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        print("Failed to grab frame")
+        break
+
+    # Convert to grayscale for detection
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces
+    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
+
+    # Draw rectangles around detected faces
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+        # Determine face position
+        face_center_x = x + w // 2
+        frame_center_x = frame.shape[1] // 2
+
+        if face_center_x < frame_center_x - 50:  # Face is on the left
+            
+            SetAngle(145) 
+        elif face_center_x > frame_center_x + 50:  # Face is on the right
+            
+            SetAngle(90) 
+        else:  # Face is centered
+            
+            SetAngle(45) 
+        break  # Only track the first detected face
+
+    # Show the frame with rectangles
+    cv2.imshow("Face Tracking", frame)
+
+    # Break loop on 'q' key press
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        SetAngle(90) 
+        break
+
+# Release resources
+pwm.stop()
+GPIO.cleanup()
+cap.release()
+cv2.destroyAllWindows()
+ser.close()
