@@ -65,10 +65,10 @@ def return_to_start():
     global boat_returning
     print("Returning to starting position...")
 
-    reverse_log = {}  # Dictionary for reverse movement
+    reverse_log = {}
 
-    # Reverse the stored movements with mapped angles
-    for angle, duration in reversed(servo_position_log.items()):
+    # Reverse the stored movements
+    for angle, duration in reversed(list(servo_position_log.items())):  # ✅ FIXED
         if angle == 45:
             reverse_log[225] = duration
         elif angle == 90:
